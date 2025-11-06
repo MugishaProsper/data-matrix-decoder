@@ -131,75 +131,28 @@ def process_image(
 
         else:
             print(f"No Data Matrix found in {image_path}")
-            records.append({
-                'filename': Path(image_path).name,
-                'code_index': 0,
-                'data': '',
-                'x': '', 'y': '', 'width': '', 'height': ''
-            })
+            records.append(create_empty_record(Path(image_path).name))
 
         return records
 
     except Exception as e:
         print(f"Error processing {image_path}: {e}")
-        return [{
-            'filename': Path(image_path).name,
-            'code_index': 0,
-            'data': f'ERROR: {e}',
-            'x': '', 'y': '', 'width': '', 'height': ''
-        }]
+        return [create_error_record(Path(image_path).name, e)]
 
-def main():
-    parser = argparse.ArgumentParser(description="Powerful Data Matrix Decoder")
-    parser.add_argument("input", help="Image file or directory")
-    parser.add_argument("-o", "--output", default="results", help="Output directory")
-    parser.add_argument("--csv", default="datamatrix_results.csv", help="CSV output file")
-    parser.add_argument("--draw", action="store_true", help="Draw boxes on output images")
-    parser.add_argument("--timeout", type=int, default=2000, help="Decoding timeout in ms (default: 2000)")
-    parser.add_argument("--max-count", type=int, help="Max number of codes to decode per image")
-
-    args = parser.parse_args()
-
-    input_path = Path(args.input)
-    output_dir = Path(args.output)
-    output_dir.mkdir(exist_ok=True)
-
-    # Collect image files
-    if input_path.is_dir():
-        image_files = list(input_path.glob("*.png")) + \
-                      list(input_path.glob("*.jpg")) + \
-                      list(input_path.glob("*.jpeg")) + \
-                      list(input_path.glob("*.bmp")) + \
-                      list(input_path.glob("*.tiff"))
-    else:
-        image_files = [input_path]
-
-    if not image_files:
-        print("No image files found.")
-        return
-
-    # Process all images
+def process_batch(
+    image_files: List[Path],
+    output_dir: Path,
+    draw_boxes: bool = False,
+    timeout_ms: int = 2000
+) -> List[dict]:
+    """Process multiple images and return all results"""
     all_records = []
     for img_path in image_files:
         records = process_image(
             str(img_path),
             str(output_dir),
-            draw_boxes=args.draw,
-            timeout_ms=args.timeout
+            draw_boxes=draw_boxes,
+            timeout_ms=timeout_ms
         )
         all_records.extend(records)
-
-    # Save CSV
-    csv_path = Path(args.csv)
-    with open(csv_path, 'w', newline='', encoding='utf-8') as f:
-        fieldnames = ['filename', 'code_index', 'data', 'x', 'y', 'width', 'height']
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(all_records)
-
-    print(f"\nDecoding complete. Results saved to {csv_path}")
-    if args.draw:
-        print(f"Annotated images saved in {output_dir}")
-
-if __name__ == "__main__":
-    main()
+    return all_records

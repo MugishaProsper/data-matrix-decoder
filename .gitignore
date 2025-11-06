@@ -1,2 +1,4 @@
 venv
 assets/*
+__init__.py
+__pycache__
