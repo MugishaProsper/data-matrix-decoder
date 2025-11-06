@@ -1,12 +1,11 @@
 import os
 import cv2
-import csv
-import argparse
 from pathlib import Path
 from typing import List, Tuple, Optional
 from PIL import Image
 import numpy as np
 from pylibdmtx.pylibdmtx import decode as dmtx_decode
+from .utils import draw_results, create_error_record, create_empty_record
 
 def preprocess_image(image: np.ndarray) -> List[np.ndarray]:
     """
@@ -97,15 +96,7 @@ def decode_datamatrix_from_image(
 
     return unique_results
 
-def draw_results(image: np.ndarray, results: List[Tuple[str, Tuple[int, int, int, int]]], output_path: str):
-    """Draw bounding boxes and text on image"""
-    img_with_boxes = image.copy()
-    for data, (x, y, w, h) in results:
-        cv2.rectangle(img_with_boxes, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(img_with_boxes, data[:20], (x, y - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-    cv2.imwrite(output_path, img_with_boxes)
 
 def process_image(
     image_path: str,
